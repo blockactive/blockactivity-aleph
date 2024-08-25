@@ -5,10 +5,12 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
 import { Search, User, Activity, CheckCircle, Menu, X } from 'lucide-react'
+import { GoPlusLabs } from '@normalizex/gopluslabs-api';
+const goPlus = new GoPlusLabs();
 
 const getAddressActivity = async (address: string): Promise<any> => {
   try {
-    const response = await fetch(`http://localhost:5001/moralisaddress?address=${encodeURIComponent(address)}`);
+    const response = await fetch(`http://localhost:5001/addressActivity?address=${encodeURIComponent(address)}`);
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
@@ -25,6 +27,39 @@ const getAddressActivity = async (address: string): Promise<any> => {
   } catch (error) {
     console.error("Error fetching address activity:", error);
     return null;
+  }
+};
+
+const checkAddressSecurity = async (address: string) => {
+  const chainId = "1";
+
+  try {
+    const res = await goPlus.addressSecurity(chainId, address)  as AddressSecurityResponse;
+console.log("res",res)
+
+
+if (res.contract_address === "1" ) {
+  return "This address belongs to a contract.";
+}
+
+
+  // Check if any other field has the value "1"
+  const hasMaliciousActivity = Object.keys(res).some((field) => {
+    // Ignore the contract_address and mixer fields
+    if (field !== "contract_address" && field !== "mixer") {
+      return res[field] === "1";
+    }
+    return false;
+  });
+
+  if (hasMaliciousActivity) {
+    return "The wallet has malicious activity detected." ;
+  }
+// If no malicious activity detected
+return "This wallet doesn't have any malicious activity detected.";
+
+  } catch (error) {
+    console.error('An error occurred:', error);
   }
 };
 
@@ -73,7 +108,8 @@ export default function Component() {
   const [searchAddress, setSearchAddress] = useState('')
   const [activeChains, setActiveChains] = useState<any[]>([]);
   const [verification, setVerification] = useState<boolean>(false);
-  
+  const [maliciousActivityVerifier, setMaliciousActivityVerifier] = useState('');
+
   const [userAddress, setUserAddress] = useState('')
   const [isMenuOpen, setIsMenuOpen] = useState(false)
 
@@ -90,7 +126,10 @@ export default function Component() {
     if (searchAddress) {
       const activityData = await getAddressActivity(searchAddress)
       const isVerified = isAddressVerified(searchAddress)
-    
+
+      const securityMessage = await checkAddressSecurity(searchAddress);
+      setMaliciousActivityVerifier(securityMessage || '');  
+          //i should set the maliciousActivityVerifier value here
       if (activityData && activityData.active_chains) {
         setActiveChains(activityData.active_chains);
       } else {
@@ -229,19 +268,27 @@ export default function Component() {
             </CheckCircle>
           )}
         </div>
+     
         <div>
   <h3 className="font-medium mb-2 text-gray-300">Active Chains:</h3>
+ 
   {activeChains && (activeChains.length > 0) ? (
+    
     <ul className="list-disc list-inside text-gray-300">
       {activeChains.map((chain: any, index: number) => (
+
         <li key={index} className="ml-4 mb-2">
           <span className="font-semibold text-md underline ">{chain.chain}</span> <br /> <p className='text-sm text-white italic '>Last usage:  {chain.last_transaction.block_timestamp}</p>
         </li>
       ))}
     </ul>
   ) : (
-    <p className="text-gray-500">No active chains found.</p>
+    <p className="text-gray-500">Press the button to se results!
+    If you pressed the button and still nothing... no activity was found in any chain.</p>
   )}
+   {maliciousActivityVerifier && (
+  <p className="text-orange-500 mb-4">{maliciousActivityVerifier}</p>
+)}
 </div>
       </div>
     </CardContent>
@@ -249,6 +296,7 @@ export default function Component() {
   }        
 
         </div>
+   
       </main>
     </div>
   )
