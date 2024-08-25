@@ -53,10 +53,10 @@ if (res.contract_address === "1" ) {
   });
 
   if (hasMaliciousActivity) {
-    return "The address has malicious activity detected." ;
+    return "The address has malicious activity detected by GoPlus." ;
   }
 // If no malicious activity detected
-return "This address doesn't have any malicious activity detected.";
+return "This address doesn't have any malicious activity detected by GoPlus.";
 
   } catch (error) {
     console.error('An error occurred:', error);
