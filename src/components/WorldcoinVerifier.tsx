@@ -8,32 +8,20 @@ import { Search, User, Activity, CheckCircle, Menu, X } from 'lucide-react'
 
 const getAddressActivity = async (address: string): Promise<any> => {
   try {
-    console.log("entertry")
     const response = await fetch(`http://localhost:5001/moralisaddress?address=${encodeURIComponent(address)}`);
-    console.log("res:", response)
     if (!response.ok) {
       throw new Error(`HTTP error! status: ${response.status}`);
     }
-    console.log("data")
     const data = await response.json();
-    console.log(data);
 
     // Sort active chains by the last transaction timestamp
-    const sortedChains = data.active_chains
-      .filter((chain: any) => chain.last_transaction !== null)
-      .sort((a: any, b: any) => {
-        if (a.last_transaction && b.last_transaction) {
-          return new Date(b.last_transaction.block_timestamp).getTime() - new Date(a.last_transaction.block_timestamp).getTime();
-        }
-        return 0;
-      });
+    data.active_chains = data.active_chains
+    .filter((chain: any) => chain.last_transaction !== null)
+    .sort((a: any, b: any) => {
+      return new Date(b.last_transaction.block_timestamp).getTime() - new Date(a.last_transaction.block_timestamp).getTime();
+    });
 
-
-    
-    return {
-      ...data,
-      active_chains: sortedChains
-    };
+  return data;
   } catch (error) {
     console.error("Error fetching address activity:", error);
     return null;
@@ -103,12 +91,14 @@ export default function Component() {
       const activeChains = await getAddressActivity(searchAddress)
       console.log("activeChains", activeChains);
 console.log("searchAddress", searchAddress);
+  
 
       const isVerified = isAddressVerified(searchAddress)
+
       setSearchResult({ address: searchAddress, activeChains, isVerified })
     }
   }
-
+//el searchresult se updatea pero ahi arriba retorna null
   const handleWorldCoinSuccess = async (result: any) => {
     console.log("WorldCoin verification successful", result)
     
