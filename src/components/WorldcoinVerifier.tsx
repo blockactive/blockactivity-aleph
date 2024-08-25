@@ -301,6 +301,10 @@ export default function Component() {
         {maliciousActivityVerifier && (
       <p className="text-orange-500 mb-4">{maliciousActivityVerifier}</p>
     )}
+       {
+      <p className="text-green-500 mb-4"> This address is a Worldcoin verified human logged in BlockActivity!</p>
+    }
+    
      {walletStats && (
         <div className="mt-4 text-gray-300">
           <p><strong>NFTs:</strong> {walletStats.nfts}</p>
