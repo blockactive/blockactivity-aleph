@@ -6,6 +6,8 @@ import { Input } from "@/components/ui/input"
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
 import { Search, User, Activity, CheckCircle, Menu, X } from 'lucide-react'
 import { GoPlusLabs } from '@normalizex/gopluslabs-api';
+
+
 const goPlus = new GoPlusLabs();
 
 const getAddressActivity = async (address: string): Promise<any> => {
@@ -30,6 +32,25 @@ const getAddressActivity = async (address: string): Promise<any> => {
   }
 };
 
+
+const getWalletProfile = async (address: string): Promise<any> => {
+  try {
+    const response = await fetch(`http://localhost:5001/addressProfile?address=${encodeURIComponent(address)}`);
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    const data = await response.json();
+
+
+
+  return data;
+  } catch (error) {
+    console.error("Error fetching address activity:", error);
+    return null;
+  }
+};
+
+
 const checkAddressSecurity = async (address: string) => {
   const chainId = "1";
 
@@ -41,8 +62,6 @@ console.log("res",res)
 if (res.contract_address === "1" ) {
   return "This address belongs to a contract.";
 }
-
-
   // Check if any other field has the value "1"
   const hasMaliciousActivity = Object.keys(res).some((field) => {
     // Ignore the contract_address and mixer fields
@@ -109,7 +128,14 @@ export default function Component() {
   const [activeChains, setActiveChains] = useState<any[]>([]);
   const [verification, setVerification] = useState<boolean>(false);
   const [maliciousActivityVerifier, setMaliciousActivityVerifier] = useState('');
-
+  const [walletStats, setWalletStats] = useState<{
+    nfts: string;
+    collections: string;
+    transactions: { total: string };
+    nft_transfers: { total: string };
+    token_transfers: { total: string };
+  } | null>(null);
+  
   const [userAddress, setUserAddress] = useState('')
   const [isMenuOpen, setIsMenuOpen] = useState(false)
 
@@ -135,7 +161,9 @@ export default function Component() {
       } else {
         setActiveChains([]); 
       }
-
+      const stats = await getWalletProfile(searchAddress);
+      setWalletStats(stats);
+      console.log(walletStats)
       setVerification(isVerified)
       }
   }
@@ -254,7 +282,7 @@ export default function Component() {
   {searchAddress && 
   (<Card className="bg-gray-800 border-gray-700">
     <CardHeader>
-      <CardTitle className="text-xl sm:text-2xl text-white">Search Result</CardTitle>
+      <CardTitle className="text-xl sm:text-2xl text-white">Activity</CardTitle>
     </CardHeader>
     <CardContent>
       <div className="space-y-4">
@@ -270,6 +298,18 @@ export default function Component() {
         </div>
      
         <div>
+        {maliciousActivityVerifier && (
+      <p className="text-orange-500 mb-4">{maliciousActivityVerifier}</p>
+    )}
+     {walletStats && (
+        <div className="mt-4 text-gray-300">
+          <p><strong>NFTs:</strong> {walletStats.nfts}</p>
+          <p><strong>Collections:</strong> {walletStats.collections}</p>
+          <p><strong>Total Transactions:</strong> {walletStats.transactions.total}</p>
+          <p><strong>NFT Transfers:</strong> {walletStats.nft_transfers.total}</p>
+          <p><strong>Token Transfers:</strong> {walletStats.token_transfers.total}</p>
+        </div>
+      )}
   <h3 className="font-medium mb-2 text-gray-300">Active Chains:</h3>
  
   {activeChains && (activeChains.length > 0) ? (
@@ -282,13 +322,13 @@ export default function Component() {
         </li>
       ))}
     </ul>
+   
   ) : (
     <p className="text-gray-500">Press the button to se results!
     If you pressed the button and still nothing... no activity was found in any chain.</p>
   )}
-   {maliciousActivityVerifier && (
-  <p className="text-orange-500 mb-4">{maliciousActivityVerifier}</p>
-)}
+   
+  
 </div>
       </div>
     </CardContent>
