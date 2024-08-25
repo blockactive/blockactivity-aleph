@@ -10,8 +10,8 @@ const getAddressActivity = async (address: string): Promise<any> => {
   try {
     console.log("entertry")
     const response = await fetch(`http://localhost:5001/moralisaddress?address=${encodeURIComponent(address)}`);
+    console.log("res:", response)
     if (!response.ok) {
-      console.log("notok")
       throw new Error(`HTTP error! status: ${response.status}`);
     }
     console.log("data")
