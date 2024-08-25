@@ -1,3 +1,12 @@
+link to backend repo: https://github.com/blockactive/blockactivity-aleph-back
+
+
+
+When we transfer money through a wallet, little information do we have about the destination address. This lack of insight into the address's usage, history, and potential risks has led to millions in lost crypto assets. BlockActivity tackles this information gap by providing essential details about an address, helping users make more informed and secure transactions.
+
+
+
+
 This is a [Next.js](https://nextjs.org/) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
 
 ## Getting Started
