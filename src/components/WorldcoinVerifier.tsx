@@ -71,7 +71,9 @@ const verifyProof = async (proof: any) => {
 
 export default function Component() {
   const [searchAddress, setSearchAddress] = useState('')
-  const [searchResult, setSearchResult] = useState<any>(null)
+  const [activeChains, setActiveChains] = useState<any[]>([]);
+  const [verification, setVerification] = useState<boolean>(false);
+  
   const [userAddress, setUserAddress] = useState('')
   const [isMenuOpen, setIsMenuOpen] = useState(false)
 
@@ -86,19 +88,20 @@ export default function Component() {
     console.log("handleSearch triggered");
 
     if (searchAddress) {
-      console.log("searchAddress", searchAddress);
-
-      const activeChains = await getAddressActivity(searchAddress)
-      console.log("activeChains", activeChains);
-console.log("searchAddress", searchAddress);
-  
-
+      const activityData = await getAddressActivity(searchAddress)
       const isVerified = isAddressVerified(searchAddress)
+    
+      if (activityData && activityData.active_chains) {
+        setActiveChains(activityData.active_chains);
+      } else {
+        setActiveChains([]); 
+      }
 
-      setSearchResult({ address: searchAddress, activeChains, isVerified })
-    }
+      setVerification(isVerified)
+      }
   }
-//el searchresult se updatea pero ahi arriba retorna null
+ 
+
   const handleWorldCoinSuccess = async (result: any) => {
     console.log("WorldCoin verification successful", result)
     
@@ -208,8 +211,9 @@ console.log("searchAddress", searchAddress);
             </CardContent>
           </Card>
 
-          {searchResult && (
-  <Card className="bg-gray-800 border-gray-700">
+
+  {searchAddress && 
+  (<Card className="bg-gray-800 border-gray-700">
     <CardHeader>
       <CardTitle className="text-xl sm:text-2xl text-white">Search Result</CardTitle>
     </CardHeader>
@@ -218,8 +222,8 @@ console.log("searchAddress", searchAddress);
         <div className="flex flex-col sm:flex-row sm:items-center space-y-2 sm:space-y-0 sm:space-x-2">
           <User className="h-5 w-5 text-gray-400" />
           <span className="font-medium text-gray-300">Address:</span>
-          <span className="break-all text-white">{searchResult.address}</span>
-          {searchResult.isVerified && (
+          <span className="break-all text-white">{searchAddress}</span>
+          {verification && (
             <CheckCircle className="h-5 w-5 text-green-500 ml-2" aria-label="Verified by Worldcoin">
               <title>Verified by Worldcoin</title>
             </CheckCircle>
@@ -227,11 +231,11 @@ console.log("searchAddress", searchAddress);
         </div>
         <div>
   <h3 className="font-medium mb-2 text-gray-300">Active Chains:</h3>
-  {searchResult && searchResult.activeChains && searchResult.activeChains.length > 0 ? (
+  {activeChains && (activeChains.length > 0) ? (
     <ul className="list-disc list-inside text-gray-300">
-      {searchResult.activeChains.map((chain: any, index: number) => (
-        <li key={index} className="ml-4">
-          <span className="font-medium">{chain.chain}</span>: {chain.last_transaction.block_timestamp}
+      {activeChains.map((chain: any, index: number) => (
+        <li key={index} className="ml-4 mb-2">
+          <span className="font-semibold text-md underline ">{chain.chain}</span> <br /> <p className='text-sm text-white italic '>Last usage:  {chain.last_transaction.block_timestamp}</p>
         </li>
       ))}
     </ul>
@@ -241,8 +245,8 @@ console.log("searchAddress", searchAddress);
 </div>
       </div>
     </CardContent>
-  </Card>
-)}
+  </Card>)
+  }        
 
         </div>
       </main>
