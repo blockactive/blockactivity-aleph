@@ -6,10 +6,40 @@ import { Input } from "@/components/ui/input"
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card"
 import { Search, User, Activity, CheckCircle, Menu, X } from 'lucide-react'
 
-const getAddressActivity = async (address: string) => {
-  const mockChains = ['Ethereum', 'Polygon', 'Arbitrum', 'Optimism', 'Base']
-  return mockChains.filter(() => Math.random() > 0.5)
-}
+const getAddressActivity = async (address: string): Promise<any> => {
+  try {
+    console.log("entertry")
+    const response = await fetch(`http://localhost:5001/moralisaddress?address=${encodeURIComponent(address)}`);
+    if (!response.ok) {
+      console.log("notok")
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+    console.log("data")
+    const data = await response.json();
+    console.log(data);
+
+    // Sort active chains by the last transaction timestamp
+    const sortedChains = data.active_chains
+      .filter((chain: any) => chain.last_transaction !== null)
+      .sort((a: any, b: any) => {
+        if (a.last_transaction && b.last_transaction) {
+          return new Date(b.last_transaction.block_timestamp).getTime() - new Date(a.last_transaction.block_timestamp).getTime();
+        }
+        return 0;
+      });
+
+
+    
+    return {
+      ...data,
+      active_chains: sortedChains
+    };
+  } catch (error) {
+    console.error("Error fetching address activity:", error);
+    return null;
+  }
+};
+
 
 const isAddressVerified = (address: string) => {
   const verifiedAddresses = JSON.parse(localStorage.getItem('worldcoinVerifiedAddresses') || '[]')
@@ -65,8 +95,15 @@ export default function Component() {
   }, [])
 
   const handleSearch = async () => {
+    console.log("handleSearch triggered");
+
     if (searchAddress) {
+      console.log("searchAddress", searchAddress);
+
       const activeChains = await getAddressActivity(searchAddress)
+      console.log("activeChains", activeChains);
+console.log("searchAddress", searchAddress);
+
       const isVerified = isAddressVerified(searchAddress)
       setSearchResult({ address: searchAddress, activeChains, isVerified })
     }
@@ -97,7 +134,7 @@ export default function Component() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between h-16">
             <div className="flex items-center">
-              <span className="font-bold text-xl text-white">Address Verifier</span>
+              <span className="font-bold text-xl text-white">BlockActivity</span>
             </div>
             <div className="hidden md:block">
               {!userAddress ? (
@@ -182,38 +219,41 @@ export default function Component() {
           </Card>
 
           {searchResult && (
-            <Card className="bg-gray-800 border-gray-700">
-              <CardHeader>
-                <CardTitle className="text-xl sm:text-2xl text-white">Search Result</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <div className="flex flex-col sm:flex-row sm:items-center space-y-2 sm:space-y-0 sm:space-x-2">
-                    <User className="h-5 w-5 text-gray-400" />
-                    <span className="font-medium text-gray-300">Address:</span>
-                    <span className="break-all text-white">{searchResult.address}</span>
-                    {searchResult.isVerified && (
-                      <CheckCircle className="h-5 w-5 text-green-500 ml-2" aria-label="Verified by Worldcoin">
-                        <title>Verified by Worldcoin</title>
-                      </CheckCircle>
-                    )}
-                  </div>
-                  <div>
-                    <h3 className="font-medium mb-2 text-gray-300">Active Chains:</h3>
-                    {searchResult.activeChains.length > 0 ? (
-                      <ul className="list-disc list-inside text-gray-300">
-                        {searchResult.activeChains.map((chain: string, index: number) => (
-                          <li key={index} className="ml-4">{chain}</li>
-                        ))}
-                      </ul>
-                    ) : (
-                      <p className="text-gray-500">No active chains found.</p>
-                    )}
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
+  <Card className="bg-gray-800 border-gray-700">
+    <CardHeader>
+      <CardTitle className="text-xl sm:text-2xl text-white">Search Result</CardTitle>
+    </CardHeader>
+    <CardContent>
+      <div className="space-y-4">
+        <div className="flex flex-col sm:flex-row sm:items-center space-y-2 sm:space-y-0 sm:space-x-2">
+          <User className="h-5 w-5 text-gray-400" />
+          <span className="font-medium text-gray-300">Address:</span>
+          <span className="break-all text-white">{searchResult.address}</span>
+          {searchResult.isVerified && (
+            <CheckCircle className="h-5 w-5 text-green-500 ml-2" aria-label="Verified by Worldcoin">
+              <title>Verified by Worldcoin</title>
+            </CheckCircle>
           )}
+        </div>
+        <div>
+  <h3 className="font-medium mb-2 text-gray-300">Active Chains:</h3>
+  {searchResult && searchResult.activeChains && searchResult.activeChains.length > 0 ? (
+    <ul className="list-disc list-inside text-gray-300">
+      {searchResult.activeChains.map((chain: any, index: number) => (
+        <li key={index} className="ml-4">
+          <span className="font-medium">{chain.chain}</span>: {chain.last_transaction.block_timestamp}
+        </li>
+      ))}
+    </ul>
+  ) : (
+    <p className="text-gray-500">No active chains found.</p>
+  )}
+</div>
+      </div>
+    </CardContent>
+  </Card>
+)}
+
         </div>
       </main>
     </div>
